@@ -1,7 +1,9 @@
 (ns om-quiz.core
+  (:require-macros [cljs.core.async.macros :refer [go]])
   (:require [om-quiz.questions :as q]
             [om.core :as om :include-macros true]
-            [om.dom :as dom :include-macros true]))
+            [om.dom :as dom :include-macros true]
+            [cljs.core.async :refer [put! chan <!]]))
 
 (enable-console-print!)
 
@@ -9,21 +11,34 @@
 
 (defn choice-view [choice owner]
   (reify
-    om/IRender
-    (render [_]
+    om/IRenderState
+    (render-state [this {:keys [c]}]
       (dom/div nil
-               (dom/button nil choice)))))
+               (dom/input #js {:name owner :type "radio" :onClick (fn [e] (put! c @choice))}
+                           choice)))))
 
 (defn question-view [question-map owner]
   (reify
-    om/IRender
-    (render [_]
-      (apply dom/div nil
-             (dom/h3 nil (:question question-map))
-             (om/build-all choice-view (:choices question-map))))))
+    om/IRenderState
+    (render-state [this {:keys [c]}]
+      (dom/div nil
+               (dom/h3 nil (:question question-map))
+               (apply dom/form nil 
+                      (om/build-all choice-view
+                                    (:choices question-map)
+                                    {:init-state {:c c}}))))))
 
 (defn quiz-view [app owner]
   (reify
+    om/IInitState
+    (init-state [_] {:c (chan)})
+    om/IWillMount
+    (will-mount [_]
+      (let [click-channel (om/get-state owner :c)]
+        (go (loop []
+              (let [choice (<! click-channel)]
+                  (js/alert choice))
+              (recur)))))
     om/IRender
     (render [_]
       (dom/div nil
