@@ -12,7 +12,7 @@
 (defn choice-view [choice owner]
   (reify
     om/IRenderState
-    (render-state [this {:keys [c] :as state}]
+    (render-state [this {:keys [c]}]
       (dom/div nil
                (dom/input #js {:name owner :type "radio" :onClick (fn [e] (put! c choice))}
                            choice)))))
@@ -20,9 +20,10 @@
 (defn question-view [question-map owner]
   (reify
     om/IRenderState
-    (render-state [this {:keys [c] :as state}]
+    (render-state [this {:keys [c]}]
       (dom/div nil
                (dom/h3 nil (:question question-map))
+               (dom/h4 nil (str "Your Answer: ") (:guess question-map))
                (apply dom/form nil 
                       (om/build-all choice-view
                                     (:choices question-map)
@@ -37,7 +38,9 @@
       (let [click-channel (om/get-state owner :c)]
         (go (loop []
               (let [choice (<! click-channel)]
-                  (js/alert choice))
+                (om/transact! app
+                              [:questions 0]
+                              (fn [qs] (assoc qs :guess choice))))
               (recur)))))
     om/IRenderState
     (render-state [this {:keys [c]}]
