@@ -12,15 +12,15 @@
 (defn choice-view [choice owner]
   (reify
     om/IRenderState
-    (render-state [this {:keys [c]}]
+    (render-state [this {:keys [c] :as state}]
       (dom/div nil
-               (dom/input #js {:name owner :type "radio" :onClick (fn [e] (put! c @choice))}
+               (dom/input #js {:name owner :type "radio" :onClick (fn [e] (put! c choice))}
                            choice)))))
 
 (defn question-view [question-map owner]
   (reify
     om/IRenderState
-    (render-state [this {:keys [c]}]
+    (render-state [this {:keys [c] :as state}]
       (dom/div nil
                (dom/h3 nil (:question question-map))
                (apply dom/form nil 
@@ -39,11 +39,12 @@
               (let [choice (<! click-channel)]
                   (js/alert choice))
               (recur)))))
-    om/IRender
-    (render [_]
+    om/IRenderState
+    (render-state [this {:keys [c]}]
       (dom/div nil
                (dom/h2 nil "Quiz Header")
                (apply dom/ul nil
-                      (om/build-all question-view (:questions app)))))))
+                      (om/build-all question-view (:questions app) {:init-state {:c c}}))
+               (dom/button #js {:onClick (fn [e] (js/alert "What!?"))} "Submit!")))))
 
 (om/root quiz-view app-state {:target (. js/document (getElementById "app"))})
