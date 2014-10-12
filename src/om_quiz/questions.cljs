@@ -2,24 +2,6 @@
 
 (def questions
   [{:question "What is the Answer to the Ultimate Question of Life, Universe, and Everything?"
-    :answer "42"
-    :guess nil
-    :choices ["0" "24" "42" "NaN" "\"\""]}
-   {:question "What was eventually accepted for the Ultimate *Question* of Life, Universe, and Everything?"
-    :choices ["What is yellow and dangerous?"
-              "How many roads must a man walk down?"
-              "How many Vogons does it take to change a lightbulb?"
-              "What is six times seven?"
-              "What is six times nine (in base 13)?"
-              "None of the above."]
-    :answer "How many roads must a man walk down?"}
-   {:question "In the beginning of the 1st book, Arthur Dent's house was demolished to make way for what?"
-    :choices ["A subway."
-              "A corporate headquaters."
-              "A pub."
-              "A bypass."]
-    :answer  "A bypass."}]
-  #_[{:question "What is the Answer to the Ultimate Question of Life, Universe, and Everything?"
       :answer "42"
       :choices ["0" "24" "42" "NaN" "\"\""]}
      {:question "What was eventually accepted for the Ultimate *Question* of Life, Universe, and Everything?"
