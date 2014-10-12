@@ -44,10 +44,9 @@
                                     {:init-state {:c c}}))))))
 
 (defn score [app]
-  (->> (map :guess (@app :answers))
-       (map = (map :answer (@app :answers)))
-       (filter true?)
-       count))
+  (let [correct (filter #(= (:guess %) (:answer %)) (:answers @app))]
+    {:num-correct (count correct)
+     :score (reduce + (map :score correct))}))
 
 (defn break-at [n coll]
   [(take n coll) (drop (inc n) coll)])
@@ -93,7 +92,9 @@
 
      (= new-num-asked (:num-to-ask @app))
      (do (process-answer app)
-         (js/alert (str "You answered " (score app) " out of " (:num-to-ask @app))))
+         (let [score-result (score app)]
+           (js/alert (str "You answered " (:num-correct score-result) " out of " (:num-to-ask @app)
+                          "\nYour score was " (:score score-result)))))
 
      :else
      (process-answer app))))
