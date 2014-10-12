@@ -8,10 +8,11 @@
 (enable-console-print!)
 
 ;; Structure of app:
-;; {:questions [{:question java.lang.String
-;;               :answer java.lang.String
-;;               :guess java.lang.String
-;;               :choices [java.lang.String]}]
+;; {:questions {java.lang.Integer {:question java.lang.String
+;;                                 :answer java.lang.String
+;;                                 :guess java.lang.String
+;;                                 :choices [java.lang.String]
+;;                                 :score java.lang.Integer}}
 ;;  :current-question java.lang.Integer}
 (def app-state (atom {:questions q/questions
                       :num-questions (count q/questions)
@@ -41,6 +42,12 @@
                                     (:choices question)
                                     {:init-state {:c c}}))))))
 
+(defn score [app]
+  (->> (map :guess (@app :questions))
+       (map = (map :answer (@app :questions)))
+       (filter true?)
+       count))
+
 (defn submit-button [app owner]
   (let [new-num-asked (inc (:num-asked @app))
         guess (-> @app :questions (get (:current-question @app)) :guess)]
@@ -49,7 +56,7 @@
      (js/alert "The guess is nil!")
 
      (= new-num-asked (:num-to-ask @app))
-     (js/alert "We're done here.")
+     (js/alert (str "You answered " (score app) " out of " (:num-to-ask @app)))
 
      :else
      (do (om/transact! app [:num-asked] inc)

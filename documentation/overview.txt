@@ -1,0 +1,46 @@
+The quiz should provide harder questions is the user answers
+correctly, and easier questions if the user does not. Each question
+should be ranked with a unique :score ranking indicative of the
+difficulty of the question.
+
+The algorithm is a simple binary search through the problem space, but
+in order to allow for a quiz in which you maximum number of questions
+is greater than the depth of the tree, it will remove nodes from the
+possible questions as you exhaust them. The algorithm will tend
+towards harder questions.
+
+So, for example, given these five questions, assuming we must give 3:
+[{:q "What's the answer..."
+  :s 1}
+ {:q "Arthur Dent's house was demolished for..."
+  :s 2}
+ {:q "What does the HHGG have to say about..."
+  :s 4}
+ {:q "Which of these books does not..."
+  :s 5}
+ {:q "How do you pronounce..."
+  :s 7}]
+The possible sequences are:
+4 R-> 7 R-> 5
+4 R-> 7 W-> 5
+4 W-> 2 R-> 5
+4 W-> 2 W-> 1
+
+It gets a little crazy if you have a small question bank and need to
+ask too many questions. The exact implementation is going to
+be...interesting.
+
+The implementation:
+We have a map:
+{:current-location 4
+ :questions {4 {:question java.lang.String
+                :answer java.lang.String
+                :guess java.lang.String
+                :choices [java.lang.String]}}
+ :answers {2 {:question java.lang.String
+              :answer java.lang.String
+              :guess java.lang.String
+              :choices [java.lang.String]}}}
+When we answer a question, we dissoc the current-location from
+:questions, assoc it into :answers, and find the next question
+depending on whether we answered it correctly or incorrectly.
