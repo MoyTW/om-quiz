@@ -46,7 +46,7 @@
               "Beautiful."
               "Boring."
               "Harmless."]
-    :answer "Harmless"
+    :answer "Harmless."
     :score 7}
    {:question "... and after Ford Prefect spending 15 years stuck on the planet, what does it expand to?"
     :choices ["Deadly but boring."

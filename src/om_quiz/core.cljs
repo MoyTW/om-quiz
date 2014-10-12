@@ -17,8 +17,9 @@
 (def app-state (atom {:questions q/questions
                       :num-questions (count q/questions)
                       :num-asked 0
-                      :num-to-ask 3 ;; TODO: Change!
-                      :current-question 0 ;; TODO: Change!
+                      :num-to-ask 9
+                      :current-question (quot (count q/questions) 2)
+                      :answers []
                       }))
 
 ;; TODO: Make the radio buttons clear properly!
@@ -48,6 +49,41 @@
        (filter true?)
        count))
 
+(defn break-at [n coll]
+  [(take n coll) (drop (inc n) coll)])
+
+;; The mapping should go as follows:
+;; Count=0 -> Special Case
+;; Count=1 -> 0
+;; Count=2 -> 1
+;; Count=3 -> 1
+;; Count=4 -> 2
+;; Count=5 -> 2
+;; Count=6 -> 3
+;; Count=7 -> 3
+
+(defn next-correct-with-removal [current-index above]
+  (dec (if (empty? above)
+         current-index
+         (+ current-index (inc (quot (count above) 2))))))
+
+(defn next-incorrect-with-removal [current-index below]
+  (max 0 (quot (count below) 2)))
+
+(defn process-answer [app]
+  (let [[below above] (break-at (:current-question @app) (:questions @app))
+        question (get (:questions @app) (:current-question @app))
+        correct? (= (:guess question) (:answer question))
+        current-index (:current-question @app)
+        next-index (if correct?
+                     (next-correct-with-removal current-index above)
+                     (next-incorrect-with-removal current-index below))]
+    ;; TODO: Hahaha four state-changing statements in a row!
+    (do (om/transact! app [:num-asked] inc)
+        (om/update! app [:current-question] next-index)
+        (om/update! app [:questions] (vec (concat below above)))
+        (om/transact! app [:answers] #(conj % question)))))
+
 (defn submit-button [app owner]
   (let [new-num-asked (inc (:num-asked @app))
         guess (-> @app :questions (get (:current-question @app)) :guess)]
@@ -59,8 +95,7 @@
      (js/alert (str "You answered " (score app) " out of " (:num-to-ask @app)))
 
      :else
-     (do (om/transact! app [:num-asked] inc)
-         (om/transact! app [:current-question] inc)))))
+     (process-answer app))))
 
 (defn quiz-view [app owner]
   (reify
