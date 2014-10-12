@@ -7,7 +7,14 @@
 
 (enable-console-print!)
 
-(def app-state (atom {:questions q/questions}))
+;; Structure of app:
+;; {:questions [{:question java.lang.String
+;;               :answer java.lang.String
+;;               :guess java.lang.String
+;;               :choices [java.lang.String]}]
+;;  :current-question java.lang.Integer}
+(def app-state (atom {:questions q/questions
+                      :current-question 1}))
 
 (defn choice-view [choice owner]
   (reify
@@ -17,12 +24,24 @@
                (dom/input #js {:name owner :type "radio" :onClick (fn [e] (put! c choice))}
                            choice)))))
 
-(defn question-view [question-map owner]
+(defn question-view [question owner]
   (reify
     om/IRenderState
     (render-state [this {:keys [c]}]
       (dom/div nil
-               (dom/h3 nil (:question question-map))
+               (dom/h3 nil (:question question))
+               (dom/h4 nil (str "Your Answer: ") (:guess question))
+               (apply dom/form nil 
+                      (om/build-all choice-view
+                                    (:choices question)
+                                    {:init-state {:c c}}))))))
+
+(defn questions-views [question-map owner]
+  (reify
+    om/IRenderState
+    (render-state [this {:keys [c]}]
+      (dom/div nil
+               (dom/h3 nil (:question (second question-map)))
                (dom/h4 nil (str "Your Answer: ") (:guess question-map))
                (apply dom/form nil 
                       (om/build-all choice-view
@@ -46,8 +65,11 @@
     (render-state [this {:keys [c]}]
       (dom/div nil
                (dom/h2 nil "Quiz Header")
-               (apply dom/ul nil
-                      (om/build-all question-view (:questions app) {:init-state {:c c}}))
-               (dom/button #js {:onClick (fn [e] (js/alert "What!?"))} "Submit!")))))
+               (dom/ul nil
+                       (om/build question-view
+                                 (get (:questions app) (:current-question app))
+                                 {:init-state {:c c}}))
+               (dom/button #js {:onClick (fn [e] (js/alert (str #_(:questions @app) [(get (:questions @app) 0)])))}
+                           "Submit!")))))
 
 (om/root quiz-view app-state {:target (. js/document (getElementById "app"))})
