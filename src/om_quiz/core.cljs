@@ -17,7 +17,7 @@
 (def app-state (atom {:questions q/questions
                       :num-questions (count q/questions)
                       :num-asked 0
-                      :num-to-ask 9
+                      :num-to-ask 2
                       :current-question (quot (count q/questions) 2)
                       :answers []
                       }))
@@ -44,8 +44,8 @@
                                     {:init-state {:c c}}))))))
 
 (defn score [app]
-  (->> (map :guess (@app :questions))
-       (map = (map :answer (@app :questions)))
+  (->> (map :guess (@app :answers))
+       (map = (map :answer (@app :answers)))
        (filter true?)
        count))
 
@@ -92,7 +92,8 @@
      (js/alert "The guess is nil!")
 
      (= new-num-asked (:num-to-ask @app))
-     (js/alert (str "You answered " (score app) " out of " (:num-to-ask @app)))
+     (do (process-answer app)
+         (js/alert (str "You answered " (score app) " out of " (:num-to-ask @app))))
 
      :else
      (process-answer app))))
