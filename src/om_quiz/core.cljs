@@ -21,7 +21,7 @@
 (def app-state (atom {:questions q/questions
                       :num-questions (count q/questions)
                       :num-asked 0
-                      :num-to-ask 2
+                      :num-to-ask 3
                       :current-question (quot (count q/questions) 2)
                       :answers []}))
 
@@ -64,6 +64,21 @@
 (defn next-incorrect-with-removal [current-index below]
   (max 0 (quot (count below) 2)))
 
+;; To find the max score, we just iterate through the questions
+;; simulating correct answers until we've reached num-to-ask.
+(defn find-max-score [all-questions current-index num-to-ask]
+  (loop [num-asked 0
+         questions all-questions
+         score 0
+         current-index current-index]
+    (if (= num-asked num-to-ask)
+      score
+      (let [[below above] (break-at current-index questions)]
+        (recur (inc num-asked)
+               (vec (concat below above))
+               (+ score (:score (get questions current-index)))
+               (next-correct-with-removal current-index above))))))
+
 (defn process-answer [app]
   (let [[below above] (break-at (:current-question @app) (:questions @app))
         question (get (:questions @app) (:current-question @app))
@@ -85,6 +100,28 @@
       (js/alert "The guess is nil! Write something to handle this properly.")
       (process-answer app))))
 
+(defn finish-page [app]
+  (let [score-result (score app)]
+    (dom/div nil
+             (dom/h1 nil "Congratulations!")
+             (dom/h2 nil (str "You answered " (:num-correct score-result)
+                              " out of " (:num-to-ask app)))
+             (dom/h3 nil (str "Your score was " (:score score-result)))
+             (dom/h3 nil (str "Max score is: " (find-max-score q/questions
+                                                               (quot (count q/questions) 2)
+                                                               (:num-to-ask app)))))))
+
+(defn quiz-page [app owner c]
+  (dom/div nil
+           (dom/h2 nil "Quiz Header")
+           (dom/div nil
+                    (om/build question-view
+                              (get (:questions app)
+                                   (:current-question app))
+                              {:init-state {:c c}}))
+           (dom/button #js {:onClick (fn [e] (submit-button app owner))}
+                       "Submit!")))
+
 (defn quiz-view [app owner]
   (reify
     om/IInitState
@@ -101,20 +138,7 @@
     om/IRenderState
     (render-state [this {:keys [c]}]
       (if (= (:num-asked app) (:num-to-ask app))
-        (let [score-result (score app)]
-          (dom/div nil
-                   (dom/h1 nil "Congratulations!")
-                   (dom/h2 nil (str "You answered " (:num-correct score-result)
-                                    " out of " (:num-to-ask app)))
-                   (dom/h3 nil (str "Your score was " (:score score-result)))))
-        (dom/div nil
-                 (dom/h2 nil "Quiz Header")
-                 (dom/div nil
-                          (om/build question-view
-                                    (get (:questions app)
-                                         (:current-question app))
-                                    {:init-state {:c c}}))
-                 (dom/button #js {:onClick (fn [e] (submit-button app owner))}
-                             "Submit!"))))))
+        (finish-page app)
+        (quiz-page app owner c)))))
 
 (om/root quiz-view app-state {:target (. js/document (getElementById "app"))})
