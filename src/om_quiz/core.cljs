@@ -44,7 +44,7 @@
                                     {:init-state {:c c}}))))))
 
 (defn score [app]
-  (let [correct (filter #(= (:guess %) (:answer %)) (:answers @app))]
+  (let [correct (filter #(= (:guess %) (:answer %)) (:answers app))]
     {:num-correct (count correct)
      :score (reduce + (map :score correct))}))
 
@@ -86,18 +86,9 @@
 (defn submit-button [app owner]
   (let [new-num-asked (inc (:num-asked @app))
         guess (-> @app :questions (get (:current-question @app)) :guess)]
-    (cond
-     (nil? guess)
-     (js/alert "The guess is nil!")
-
-     (= new-num-asked (:num-to-ask @app))
-     (do (process-answer app)
-         (let [score-result (score app)]
-           (js/alert (str "You answered " (:num-correct score-result) " out of " (:num-to-ask @app)
-                          "\nYour score was " (:score score-result)))))
-
-     :else
-     (process-answer app))))
+    (if (nil? guess)
+      (js/alert "The guess is nil! Write something to handle this properly.")
+      (process-answer app))))
 
 (defn quiz-view [app owner]
   (reify
@@ -114,13 +105,19 @@
               (recur)))))
     om/IRenderState
     (render-state [this {:keys [c]}]
-      (dom/div nil
-               (dom/h2 #js {:ref "a"} "Quiz Header")
-               (dom/div #js {:ref "b"}
-                        (om/build question-view
-                                  (get (:questions app) (:current-question app))
-                                  {:init-state {:c c}}))
-               (dom/button #js {:onClick (fn [e] (submit-button app owner))}
-                           "Submit!")))))
+      (if (= (:num-asked app) (:num-to-ask app))
+        (let [score-result (score app)]
+          (dom/div nil
+                   (dom/h1 nil "Congratulations!")
+                   (dom/h2 nil (str "You answered " (:num-correct score-result) " out of " (:num-to-ask app)))
+                   (dom/h3 nil (str "Your score was " (:score score-result)))))
+        (dom/div nil
+                 (dom/h2 #js {:ref "a"} "Quiz Header")
+                 (dom/div #js {:ref "b"}
+                          (om/build question-view
+                                    (get (:questions app) (:current-question app))
+                                    {:init-state {:c c}}))
+                 (dom/button #js {:onClick (fn [e] (submit-button app owner))}
+                             "Submit!"))))))
 
 (om/root quiz-view app-state {:target (. js/document (getElementById "app"))})
