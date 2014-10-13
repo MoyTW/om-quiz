@@ -49,9 +49,12 @@
                                     {:init-state {:c c}}))))))
 
 (defn score [app]
-  (let [correct (filter #(= (:guess %) (:answer %)) (:answers app))]
+  ;; TODO: filter & remove same can be one!
+  (let [correct (filter #(= (:guess %) (:answer %)) (:answers app))
+        incorrect (remove #(= (:guess %) (:answer %)) (:answers app))]
     {:num-correct (count correct)
-     :score (reduce + (map :score correct))}))
+     :score (reduce + (map :score correct))
+     :incorrect incorrect}))
 
 (defn break-at [n coll]
   [(take n coll) (drop (inc n) coll)])
@@ -100,6 +103,15 @@
       (js/alert "The guess is nil! Write something to handle this properly.")
       (process-answer app))))
 
+(defn incorrect-view [incorrect owner]
+  (reify
+    om/IRender
+    (render [this]
+      (dom/li nil
+              (dom/div nil "Question: " (:question incorrect))
+              (dom/div nil "Your Guess: " (:guess incorrect))
+              (dom/div nil "Answer: " (:answer incorrect))))))
+
 (defn finish-page [app]
   (let [score-result (score app)]
     (dom/div nil
@@ -109,7 +121,9 @@
              (dom/h3 nil (str "Your score was " (:score score-result)))
              (dom/h3 nil (str "Max score is: " (find-max-score q/questions
                                                                (quot (count q/questions) 2)
-                                                               (:num-to-ask app)))))))
+                                                               (:num-to-ask app))))
+             (dom/h3 nil "Missed questions:")
+             (apply dom/ul nil (om/build-all incorrect-view (:incorrect score-result))))))
 
 (defn quiz-page [app owner c]
   (dom/div nil
