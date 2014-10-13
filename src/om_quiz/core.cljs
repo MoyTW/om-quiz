@@ -7,20 +7,23 @@
 
 (enable-console-print!)
 
-;; Structure of app:
-;; {:questions {java.lang.Integer {:question java.lang.String
-;;                                 :answer java.lang.String
-;;                                 :guess java.lang.String
-;;                                 :choices [java.lang.String]
-;;                                 :score java.lang.Integer}}
-;;  :current-question java.lang.Integer}
+;; Nested sub-structures of app:
+;; {:questions [{:question java.lang.String
+;;               :answer java.lang.String
+;;               :guess java.lang.String
+;;               :choices [java.lang.String]
+;;               :score java.lang.Integer}]
+;;  :answers [{:question java.lang.String
+;;             :answer java.lang.String
+;;             :guess java.lang.String
+;;             :choices [java.lang.String]
+;;             :score java.lang.Integer}]}
 (def app-state (atom {:questions q/questions
                       :num-questions (count q/questions)
                       :num-asked 0
                       :num-to-ask 2
                       :current-question (quot (count q/questions) 2)
-                      :answers []
-                      }))
+                      :answers []}))
 
 ;; TODO: Make the radio buttons clear properly!
 (defn choice-view [choice owner]
@@ -28,7 +31,9 @@
     om/IRenderState
     (render-state [this {:keys [c]}]
       (dom/div nil
-               (dom/input #js {:name owner :type "button" :onClick (fn [e] (put! c choice))})
+               (dom/input #js {:name owner
+                               :type "button"
+                               :onClick (fn [e] (put! c choice))})
                (dom/label nil (str " <- " choice))))))
 
 (defn question-view [question owner]
@@ -36,7 +41,7 @@
     om/IRenderState
     (render-state [this {:keys [c]}]
       (dom/div nil
-               (dom/h3 #js {:ref "q"} (:question question))
+               (dom/h3 nil (:question question))
                (dom/h4 nil (str "Your Answer: ") (:guess question))
                (apply dom/form nil
                       (om/build-all choice-view
@@ -50,16 +55,6 @@
 
 (defn break-at [n coll]
   [(take n coll) (drop (inc n) coll)])
-
-;; The mapping should go as follows:
-;; Count=0 -> Special Case
-;; Count=1 -> 0
-;; Count=2 -> 1
-;; Count=3 -> 1
-;; Count=4 -> 2
-;; Count=5 -> 2
-;; Count=6 -> 3
-;; Count=7 -> 3
 
 (defn next-correct-with-removal [current-index above]
   (dec (if (empty? above)
@@ -109,13 +104,15 @@
         (let [score-result (score app)]
           (dom/div nil
                    (dom/h1 nil "Congratulations!")
-                   (dom/h2 nil (str "You answered " (:num-correct score-result) " out of " (:num-to-ask app)))
+                   (dom/h2 nil (str "You answered " (:num-correct score-result)
+                                    " out of " (:num-to-ask app)))
                    (dom/h3 nil (str "Your score was " (:score score-result)))))
         (dom/div nil
-                 (dom/h2 #js {:ref "a"} "Quiz Header")
-                 (dom/div #js {:ref "b"}
+                 (dom/h2 nil "Quiz Header")
+                 (dom/div nil
                           (om/build question-view
-                                    (get (:questions app) (:current-question app))
+                                    (get (:questions app)
+                                         (:current-question app))
                                     {:init-state {:c c}}))
                  (dom/button #js {:onClick (fn [e] (submit-button app owner))}
                              "Submit!"))))))
