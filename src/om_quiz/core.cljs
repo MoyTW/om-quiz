@@ -103,14 +103,23 @@
       (js/alert "The guess is nil! Write something to handle this properly.")
       (process-answer app))))
 
-(defn incorrect-view [incorrect owner]
+;; TODO: Ugly code.
+(defn answer-view [answer owner]
   (reify
     om/IRender
     (render [this]
-      (dom/li nil
-              (dom/div nil "Question: " (:question incorrect))
-              (dom/div nil "Your Guess: " (:guess incorrect))
-              (dom/div nil "Answer: " (:answer incorrect))))))
+      (if (= (:guess answer) (:answer answer))
+        (let [st #js {:backgroundColor "#32CD32"}]
+          (dom/li #js {:style st}
+                  (dom/div nil "Question: " (:question answer))
+                  (dom/div nil "Points Value: " (:score answer))
+                  (dom/div nil "Answer: " (:answer answer))))
+        (let [st #js {:backgroundColor "#FFA07A"}]
+          (dom/li #js {:style st}
+                  (dom/div nil "Question: " (:question answer))
+                  (dom/div nil "Points Value: " (:score answer))
+                  (dom/div nil "Your Guess: " (:guess answer))
+                  (dom/div nil "Answer: " (:answer answer))))))))
 
 (defn finish-page [app]
   (let [score-result (score app)]
@@ -122,8 +131,8 @@
              (dom/h3 nil (str "Max score is: " (find-max-score q/questions
                                                                (quot (count q/questions) 2)
                                                                (:num-to-ask app))))
-             (dom/h3 nil "Missed questions:")
-             (apply dom/ul nil (om/build-all incorrect-view (:incorrect score-result))))))
+             (dom/h3 nil "Score Card:")
+             (apply dom/ol nil (om/build-all answer-view (:answers app))))))
 
 (defn quiz-page [app owner c]
   (dom/div nil
