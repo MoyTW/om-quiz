@@ -19,14 +19,17 @@
 ;;             :choices [java.lang.String]
 ;;             :score java.lang.Integer}]}
 
+(defn clean-state []
+  {:questions q/questions
+   :num-questions (count q/questions)
+   :num-asked 0
+   :num-to-ask 3
+   :current-page :landing
+   :answers []})
+
 ;; TODO: Make current-page not a horribly type-fluctuating hybrid that
 ;; is sometimes a keyword and sometimes an integer
-(def app-state (atom {:questions q/questions
-                      :num-questions (count q/questions)
-                      :num-asked 0
-                      :num-to-ask 3
-                      :current-page :landing
-                      :answers []}))
+(def app-state (atom (clean-state)))
 
 ;; TODO: Make the radio buttons clear properly!
 (defn choice-view [choice owner]
@@ -127,6 +130,9 @@
                   (dom/div nil "Your Guess: " (:guess answer))
                   (dom/div nil "Answer: " (:answer answer))))))))
 
+(defn restart-quiz [app]
+  (om/update! app (clean-state)))
+
 (defn finish-page [app]
   (let [score-result (score app)]
     (dom/div nil
@@ -137,6 +143,7 @@
              (dom/h3 nil (str "Max score is: " (find-max-score q/questions
                                                                (quot (count q/questions) 2)
                                                                (:num-to-ask app))))
+             (dom/button #js {:onClick #(restart-quiz app)} "RESTART THE QUIZ!")
              (dom/h3 nil "Score Card:")
              (apply dom/ol nil (om/build-all answer-view (:answers app))))))
 
